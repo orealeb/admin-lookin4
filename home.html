@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Gigs</title>
+
+    <link rel="stylesheet" href="https://rawgit.com/orealeb/Table-stylesheet/master/main.css">
+  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script src='http://mottie.github.com/tablesorter/js/jquery.tablesorter.js'></script>
+
+  <script>
+$.post( "http://lookin4.herokuapp.com/api/gigs/allfeed", function( result ) {
+
+	for (var i = 0; i < result.length; i++) { 
+	    
+	var date = result[i].date.substring(0,10);
+	var hours = result[i].date.substring(11,12);
+	  //it is pm if hours from 12 onwards
+    	var suffix = (hours >= 12)? 'PM' : 'AM';
+	 //only -12 from hours if it is greater than 12 (if not back at mid night)
+    	hours = (hours > 12)? hours -12 : hours;
+	 //if 00 then it is 12 am
+    	hours = (hours == '00' || hours == '0')? 12 : hours;
+    
+	var mins = result[i].date.substring(14,16);
+	d = date.toString() + " " + hours.toString() + ":" + mins.toString() + " " +  suffix.toString();
+	     if(result[i].hidden)
+	     {	
+	     	//alert("<td id='" + i.toString() + "._id'   style='display:none'>");
+	     	 $("#table").append("<tr>" + "<td>" + i + "</td>" + "<td id='" + i.toString() + "-nameCol'  >" + result[i].name + "</td>" + "<td>" + result[i].position + "</td>" + "<td>" + result[i].rate + "</td>" + "<td>" + result[i].description + "</td>" + "<td>" + d  + "</td>" +  "<td>" + result[i].flagged + "</td>" + "<td>" + "<a href='#' class='toggler off'>&nbsp;<span  style='display:none'>" + i.toString() + "-true</span></a>" + "</td>" + "<td id='" + i.toString() + "-_id'   style='display:none'>" + result[i]._id + "</td>" + "</tr>"); 
+	     }
+	     else
+	     {
+	     	 $("#table").append("<tr>" + "<td>" + i + "</td>"  + "<td id='" + i.toString() + "-nameCol' >" + result[i].name + "</td>" + "<td>" + result[i].position + "</td>" + "<td>" + result[i].rate + "</td>" + "<td>" + result[i].description + "</td>" + "<td>" + d + "</td>" +  "<td>" + result[i].flagged + "</td>" +  "<td>" + "<a href='#' class='toggler'>&nbsp;<span  style='display:none'>" + i.toString() + "-false</span></a>" + "</td>" + "<td id='" + i.toString() + "-_id'   style='display:none'>" + result[i]._id + "</td>" + "</tr>");
+	     }
+	}
+	$(function(){
+	$('#keywords').tablesorter({
+		
+    		dateFormat : "mmddyyyy", // set the default date format
+		/**textextraction not working, can't sort show**/
+		/**textExtraction: {
+      		6: function(node, table, cellIndex){ 
+      			return $(node).find("span").text().substring(1, $(node).find("span").text().length); },
+      
+		}**/
+		
+		
+	}); 
+  });
+
+	$('a.toggler').click(function(){
+	var num = $(this).find('span').text().split("-")[0].toString();
+	var gigID = $('#' +num.toString() +"-_id").text(); //get _id from table
+	var hidden = $(this).find('span').text().split("-")[1];
+	if(hidden === 'true') //get true/false from table
+	{	
+		$.post( "http://lookin4.herokuapp.com/api/gigs/update", { _id: gigID.toString(), hidden: "false" })
+		  .done(function( data ) {
+		    //alert( "Data Loaded: " + data );
+		  }); 
+		
+		var spans = $("span", this);
+		spans.text(''); // clear the text
+		spans.text(num.toString()+"-false");
+	}
+	else
+	{	
+		$.post( "http://lookin4.herokuapp.com/api/gigs/update", { _id: gigID.toString(), hidden: "true" })
+		  .done(function( data ) {
+		    //alert( "Data Loaded: " + data );
+		  });  
+		
+		var spans = $("span", this);
+		spans.text(''); // clear the text
+		spans.text(num.toString()+"-true");
+	}
+        $(this).toggleClass('off');
+        
+    	});
+
+}); 
+
+</script> 
+
+</head>
+
+
+
+
+  <body>
+
+ <div id="wrapper">
+  <h1>Gigs</h1>
+  <div align="right">
+<a id="button" href="/signout" > Sign Out</a></div>
+<br>
+  <table id="keywords"  class="tablesorter">
+    <thead>
+      <tr>
+        <th><span>Number</span></th>
+        <th><span>Name</span></th>
+        <th><span>Position</span></th>
+        <th><span>Rate</span></th>
+        <th><span>Description</span></th>
+        <th><span>Date</span></th>
+        <th><span>Times Flagged</span></th>
+        <th><span>Show</span></th>
+	<th  style='display:none' ><span>_id</span></th>
+
+      </tr>
+    </thead>
+    <tbody id="table">
+     
+    </tbody>
+  </table>
+ </div> 
+ 
+</body>
+
+
+
+
+
+</html>
